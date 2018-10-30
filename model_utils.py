@@ -80,5 +80,5 @@ def load_trained_model(path, device_name='cpu'):
                                      loaded['output_dim'])
     class2idx = loaded['class2idx']
     cat_to_name = loaded['cat_to_name']
-    model.load_state_dict(loaded['model_state_dict'])
+    model.classifier.load_state_dict(loaded['model_state_dict'])
     return model.to(device), class2idx, cat_to_name
