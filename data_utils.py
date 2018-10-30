@@ -28,8 +28,7 @@ def prepare_data_loaders(train_dir,
     trs_stds = (0.229, 0.224, 0.225)
     
     # define image transformations
-    train_transforms = transforms.Compose(
-                       [transforms.Resize(256),
+    train_transforms = transforms.Compose([
                        transforms.RandomRotation(30),
                        transforms.RandomResizedCrop(224),
                        transforms.RandomHorizontalFlip(),

@@ -29,16 +29,29 @@ def get_classifier(
                           ]))
     return classifier
 
-def get_feature_extractor(name='densenet201'):
+def get_feature_extractor(name='densenet201', pretrained=True):
     """
     Return pre-trained neural networks for transfer learning.
     """
     if not name in models.__dict__:
         return None
-    model = models.__dict__[name](pretrained=True)
+    model = models.__dict__[name](pretrained=pretrained)
     for param in model.parameters():
         param.requires_grad = False
-    return model
+        
+    input_dim = None
+    if name.startswith("densenet"):
+        input_dim = model.classifier.in_features
+    if name.startswith('vgg'):
+        input_dim = model.classifier[0].in_features
+    if name.startswith("resnet") or name.startswith('inception'):
+        input_dim = model.fc.in_features
+    if name.startswith("squeezenet"):
+        input_dim = model.classifier[1].in_channels
+        
+    if input_dim is None: raise Exception("unsupported pretraining model")
+    
+    return model, input_dim
 
 def get_model(
         feature_extractor_name,
@@ -48,11 +61,10 @@ def get_model(
     """
     Load pretrained netwarks and repalcy the classifier for transfer learning.
     """
-    model = get_feature_extractor(feature_extractor_name)
+    model, input_dim = get_feature_extractor(feature_extractor_name)
     if not model:
         print("Please specify a valid pretraining model name, such as 'densenet201' and 'resnet152'")
         raise Exception("Transfer learning can't find pretrained model.")
-    input_dim = model.classifier.in_features
     classifier = get_classifier(input_dim, hidden_dim, output_dim)
     model.classifier = classifier
     return model 
@@ -67,18 +79,20 @@ def load_trained_model(path, device_name='cpu'):
         loaded = torch.load(path, map_location=device_name)
     else:
         loaded = torch.load(path)
-    if loaded['pre_model_name'] == 'densenet201':
-        model = models.densenet201(pretrained=False)
-    else:
-        print('This mode is not supported, please specify "densenet201"')
+    model_name = loaded['pre_model_name']
+    try:
+        model, input_dim = get_feature_extractor(model_name, pretrained=False)
+    except Exception as e:
+        print('This mode is not supported, please specify model like "densenet201"')
+        raise e
         
     for param in model.parameters():
         param.requires_grad = False   
     
-    model.classifier = get_classifier(model.classifier.in_features,
+    model.classifier = get_classifier(input_dim,
                                      loaded['hidden_dim'],
                                      loaded['output_dim'])
     class2idx = loaded['class2idx']
     cat_to_name = loaded['cat_to_name']
-    model.classifier.load_state_dict(loaded['model_state_dict'])
+    model.load_state_dict(loaded['model_state_dict'])
     return model.to(device), class2idx, cat_to_name

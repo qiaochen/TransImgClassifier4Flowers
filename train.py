@@ -1,4 +1,10 @@
-# Imports here
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Oct 30 09:15:49 2018
+
+@author: chen
+"""
 import torch
 from torch import optim, nn
 import json
@@ -11,6 +17,7 @@ torch.manual_seed(999)
 
 def train(model, 
           dataloaders,
+          device,
           lr=5e-4, 
           lr_decay=.995, 
           feedback_interval=10, 
@@ -93,14 +100,16 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('data_dir')
     parser.add_argument('--save_dir', default='./', type=str, help="Specify the path for saving the trained model.")
-    parser.add_argument("--arch", default="densenet201", type=str, help="Specify the featrue extractor model for transfer learning. Ensure the model names follow those in torchvision.models (e.g. 'densenet201')")
+    parser.add_argument("--arch", default="densenet201", type=str, help="Specify the featrue extractor model for transfer learning. \
+                        Ensure the model names follow those in torchvision.models (e.g. 'densenet201') \
+                        supported arch: densenet, resnet, inception, squeezenet, vgg")
     parser.add_argument("--gpu", default=False, action='store_true', help="Set the flag if training using GPU")
     parser.add_argument("--learning_rate",default=5e-4, type=float, help="Setting learning rate")
     parser.add_argument("--hidden_units",default=500, type=int, help="Setting number of hidden units in the feedforward classifiers")
     parser.add_argument("--epochs",default=100, type=int, help="Setting number of epoches for model training")
     args = parser.parse_args()
     
-    device_name = "cuda" if args.gpu else "cpu"
+    device_name = "cuda" if (args.gpu and torch.cuda.is_available()) else "cpu"
 #    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_dir = args.data_dir
     train_dir = data_dir + '/train'
@@ -124,7 +133,8 @@ if __name__ == "__main__":
     model = get_model(pre_model_name, hidden_dim = 500, output_dim = 102)
     model, dev_losses, dev_acces, lowest_dev_loss, train_losses = \
         train(model, 
-              dataloaders, 
+              dataloaders,
+              device,
               lr=lr, 
               lr_decay=.995, 
               feedback_interval=10, 
@@ -139,7 +149,7 @@ if __name__ == "__main__":
                 "hidden_dim": hidden_dim,
                 "pre_model_name":pre_model_name,
                 "cat_to_name":cat_to_name,
-                "model_state_dict":model.classifier.state_dict()}, final_model_path)
+                "model_state_dict":model.state_dict()}, final_model_path)
     
     print("Model saved!")
     
