@@ -5,6 +5,7 @@ Created on Tue Oct 30 09:15:49 2018
 
 @author: chen
 """
+from torchvision import transforms
 from PIL import Image
 import numpy as np
 import torch
@@ -26,39 +27,24 @@ def predict(image_path, model, class2idx, topk=5, device_name='cpu'):
         preds, indices = probs.squeeze().topk(topk)
     return preds.cpu().numpy(), [idx2class[idx] for idx in indices.cpu().numpy()], image
 
-def process_image(image):
+def process_image(pil_image):
     ''' Scales, crops, and normalizes a PIL image for a PyTorch model,
         returns an Numpy array
     '''
+    img_loader = transforms.Compose([
+        transforms.Resize(256), 
+        transforms.CenterCrop(224), 
+        transforms.ToTensor()])
     
-    width, height = image.size   # Get dimensions
+    pil_image = img_loader(pil_image).float()
     
-    # resize
-    if width < height:
-        new_height = int(np.floor(256.0 * height / width ))
-        new_width = 256
-    else:
-        new_width = int(np.floor(256.0 * width / height))
-        new_height = 256
-    image.resize((new_width, new_height), Image.ANTIALIAS)
+    np_image = np.array(pil_image)    
     
-    # center crop
-    width, height = new_width, new_height
-    new_width, new_height = 224, 224
-    left = (width - new_width) // 2
-    top = (height - new_height) // 2
-    right = (width + new_width) // 2
-    bottom = (height + new_height) // 2
-    
-    image = image.crop((left, top, right, bottom))
-    np_image = np.array(image)
-    
-    # Normalize
-    np_image = np.divide(np_image,255)
-    means = np.array([0.485, 0.456, 0.406])
-    stds = np.array([0.229, 0.224, 0.225])
-    np_image = np.divide(np_image - means, stds)
-    return np.transpose(np_image, (2,0,1))
+    mean = np.array([0.485, 0.456, 0.406])
+    std = np.array([0.229, 0.224, 0.225])
+    np_image = (np.transpose(np_image, (1, 2, 0)) - mean)/std  
+    np_image = np.transpose(np_image, (2, 0, 1))
+    return np_image
 
 
 if __name__ == "__main__":

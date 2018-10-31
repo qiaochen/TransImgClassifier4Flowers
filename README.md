@@ -2,7 +2,7 @@
 
 The data for this project is from http://www.robots.ox.ac.uk/~vgg/data/flowers/102/index.html. There are 102 different types of flowers, where there are ~20 images per flower to train on.
 
-The dataset should be split into train, valid, and test sets respectively, where the flower images are organized within the same folder if they belong to the same class, and the folder is named with the class id.
+The dataset should be split into train, valid, and test sets respectively, where the flower images are organized within the same folder if they belong to the same class, and the folder is named with an id that can be mapped to the true class index of the images (A id2class dictionary is required to trace back).
 
 
 ### Specifications
