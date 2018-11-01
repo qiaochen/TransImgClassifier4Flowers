@@ -62,7 +62,7 @@ if __name__ == "__main__":
     
     final_model_path = args.trained_model
     img_path = args.pic_path
-    device_name = "cuda" if args.gpu else "cpu" # or "cuda"
+    device_name = "cuda" if (args.gpu and torch.cuda.is_available()) else "cpu"
     topk = args.top_k
     
     loaded_model, class2idx, cat_to_name = load_trained_model(final_model_path, device_name=device_name)

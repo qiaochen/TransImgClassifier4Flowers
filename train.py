@@ -110,7 +110,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     device_name = "cuda" if (args.gpu and torch.cuda.is_available()) else "cpu"
-#    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_dir = args.data_dir
     train_dir = data_dir + '/train'
     valid_dir = data_dir + '/valid'
